@@ -40,16 +40,11 @@
 
           buildInputs =
             if isDarwin then
-              # macOS backend links against system frameworks (Cocoa, OpenGL).
-              # Recent nixpkgs expose these through the stdenv automatically; the
-              # apple_sdk frameworks are referenced explicitly for older pins.
-              (lib.optionals (pkgs ? darwin && pkgs.darwin ? apple_sdk) (
-                with pkgs.darwin.apple_sdk.frameworks; [
-                  Cocoa
-                  OpenGL
-                  QuartzCore
-                ]
-              ))
+              # On modern nixpkgs the macOS SDK (Cocoa, OpenGL, ...) is provided
+              # by the stdenv itself, so the cgo `-framework` flags resolve
+              # without any explicit framework derivations — those legacy
+              # `darwin.apple_sdk.frameworks.*` stubs have been removed.
+              [ ]
             else
               with pkgs; [
                 wayland
