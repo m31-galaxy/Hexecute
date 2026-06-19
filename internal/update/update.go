@@ -4,7 +4,7 @@ import (
 	"math"
 
 	"github.com/ThatOtherAndrew/Hexecute/internal/models"
-	"github.com/ThatOtherAndrew/Hexecute/pkg/wayland"
+	"github.com/ThatOtherAndrew/Hexecute/internal/platform"
 )
 
 type App struct {
@@ -31,7 +31,7 @@ func (a *App) UpdateParticles(dt float32) {
 	}
 }
 
-func (a *App) UpdateCursor(window *wayland.WaylandWindow) {
+func (a *App) UpdateCursor(window platform.Window) {
 	x, y := window.GetCursorPos()
 	fx, fy := float32(x), float32(y)
 

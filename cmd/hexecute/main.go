@@ -14,10 +14,10 @@ import (
 	gestures "github.com/ThatOtherAndrew/Hexecute/internal/gesture"
 	"github.com/ThatOtherAndrew/Hexecute/internal/models"
 	"github.com/ThatOtherAndrew/Hexecute/internal/opengl"
+	"github.com/ThatOtherAndrew/Hexecute/internal/platform"
 	"github.com/ThatOtherAndrew/Hexecute/internal/spawn"
 	"github.com/ThatOtherAndrew/Hexecute/internal/stroke"
 	"github.com/ThatOtherAndrew/Hexecute/internal/update"
-	"github.com/ThatOtherAndrew/Hexecute/pkg/wayland"
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
@@ -92,9 +92,9 @@ func main() {
 		return
 	}
 
-	window, err := wayland.NewWaylandWindow()
+	window, err := platform.NewWindow()
 	if err != nil {
-		log.Fatal("Failed to create Wayland window:", err)
+		log.Fatal("Failed to create window:", err)
 	}
 	defer window.Destroy()
 
