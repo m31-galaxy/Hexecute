@@ -20,8 +20,25 @@ jobs:
       - uses: DeterminateSystems/flake-checker-action@main
       - name: Run `nix build`
         run: nix build .
-      - name: Upload artifact
+      - name: Package macOS .app bundle
+        if: runner.os == 'macOS'
+        run: |
+          rm -rf dist && mkdir -p dist
+          cp -R ./result/Applications/Hexecute.app dist/Hexecute.app
+          chmod -R u+w dist/Hexecute.app
+          chmod +x dist/Hexecute.app/Contents/MacOS/hexecute
+          # tar preserves the executable bit and bundle layout, which the
+          # artifact zip step would otherwise strip.
+          tar -C dist -czf hexecute-macos.tar.gz Hexecute.app
+      - name: Upload macOS artifact
+        if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
-          name: hexecute-${{ matrix.os }}
+          name: hexecute-macos-latest
+          path: hexecute-macos.tar.gz
+      - name: Upload Linux artifact
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hexecute-ubuntu-latest
           path: ./result/bin/

@@ -73,6 +73,16 @@ go build -o bin ./...
 ```
 The macOS build uses a native Cocoa overlay window and the system OpenGL framework — no Wayland or X11 libraries are required.
 
+For a proper, double-clickable **`Hexecute.app`** bundle (so Finder treats it as an Application instead of a Unix executable, and launching it doesn't open Terminal), build with Nix — `nix build` produces it at `result/Applications/Hexecute.app`. The bundle metadata lives in [`macos/Info.plist`](macos/Info.plist).
+
+Pre-built `.app` bundles are attached to each macOS CI run as the `hexecute-macos-latest` artifact (a `.tar.gz`, which preserves the bundle's executable bit). After downloading:
+```bash
+tar xzf hexecute-macos.tar.gz
+xattr -dr com.apple.quarantine Hexecute.app   # clear the download quarantine
+open Hexecute.app                              # or double-click it in Finder
+```
+The app is unsigned, so the first launch may require right-click → **Open** (or the `xattr` command above).
+
 ## Usage
 
 ### Setting a Keybind
@@ -98,17 +108,19 @@ bindsym $mod+space exec hexecute
 
 #### macOS
 
-Hexecute is launched on demand rather than running resident, so bind the binary to a global hotkey using a tool of your choice — for example [skhd](https://github.com/koekeishiya/skhd), [Raycast](https://www.raycast.com/), or an Automator Quick Action assigned a keyboard shortcut. An example `~/.skhdrc` entry using `cmd` + `space` (pick a combination not already taken by Spotlight):
+Hexecute is launched on demand rather than running resident, so bind it to a global hotkey using a tool of your choice — for example [skhd](https://github.com/koekeishiya/skhd), [Raycast](https://www.raycast.com/), or an Automator Quick Action assigned a keyboard shortcut. An example `~/.skhdrc` entry using `cmd` + `space` (pick a combination not already taken by Spotlight):
 
 ```
-cmd - space : /path/to/hexecute
+cmd - space : open -a /Applications/Hexecute.app
 ```
 
-> Note: depending on your macOS version, drawing the overlay over other applications may require granting Hexecute (or your terminal/launcher) **Screen Recording** and/or **Accessibility** permission under System Settings → Privacy & Security.
+> Note: depending on your macOS version, drawing the overlay over other applications may require granting Hexecute **Screen Recording** and/or **Accessibility** permission under System Settings → Privacy & Security. Using the `.app` bundle (rather than a bare binary) gives Hexecute a stable identity so these permissions persist across launches.
 
 ### Learning a Gesture
 
 To configure a gesture to launch an application, run `hexecute --learn [command]` in a terminal. Hexecute should launch - simply draw your chosen gesture **3 times** and it will be mapped to the command.
+
+> On macOS, the CLI commands (`--learn`, `--list`, `--remove`) need the binary inside the bundle, since they print progress to the terminal: run `/Applications/Hexecute.app/Contents/MacOS/hexecute --learn [command]`. Double-clicking or `open`ing the `.app` is for normal gesture-casting use.
 
 ![Gesture learning demo](assets/hexecute-learn.gif)
 

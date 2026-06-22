@@ -56,6 +56,19 @@
                 xorg.libX11
               ];
 
+          # On macOS, wrap the binary in a proper .app bundle so Finder treats
+          # it as an Application and double-clicking launches it directly (rather
+          # than opening Terminal to run a bare Unix executable). A $out/bin
+          # symlink is kept for CLI use (--learn / --list / --remove).
+          postInstall = lib.optionalString isDarwin ''
+            appBundle=$out/Applications/Hexecute.app
+            mkdir -p $appBundle/Contents/MacOS $appBundle/Contents/Resources
+            mv $out/bin/hexecute $appBundle/Contents/MacOS/hexecute
+            cp ${./macos/Info.plist} $appBundle/Contents/Info.plist
+            printf 'APPL????' > $appBundle/Contents/PkgInfo
+            ln -s ../Applications/Hexecute.app/Contents/MacOS/hexecute $out/bin/hexecute
+          '';
+
           # The Wayland/EGL driver path wrapping only applies on Linux.
           postFixup = lib.optionalString (!isDarwin) ''
             wrapProgram $out/bin/hexecute \
