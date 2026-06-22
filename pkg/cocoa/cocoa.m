@@ -1,5 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import <OpenGL/OpenGL.h>
+#import <OpenGL/gl3.h>
 #include "cocoa.h"
 
 // XKB keysym for Escape. main.go compares the reported key against this value,
@@ -44,16 +45,17 @@ static uint32_t map_keycode(unsigned short keyCode) {
 }
 
 // Convert an event's window-local location (points, bottom-left origin) into
-// backing pixels with a top-left origin, matching the Wayland convention.
+// logical points with a top-left origin. The app works in logical points (as
+// the Wayland backend does), so the cursor must not be scaled by the backing
+// factor — only the GL viewport runs at backing resolution.
 static void update_mouse_from_event(NSEvent *event) {
     if (!g_view) {
         return;
     }
     NSPoint p = [event locationInWindow];
-    CGFloat scale = [g_window backingScaleFactor];
     NSRect bounds = [g_view bounds];
-    g_mouse_x = p.x * scale;
-    g_mouse_y = (bounds.size.height - p.y) * scale;
+    g_mouse_x = p.x;
+    g_mouse_y = bounds.size.height - p.y;
 }
 
 int cocoa_init(void) {
@@ -116,14 +118,26 @@ int cocoa_init(void) {
         [g_context makeCurrentContext];
 
         // Seed the cursor position from the current global mouse location so the
-        // first frame is correct before any motion event arrives.
+        // first frame is correct before any motion event arrives. Coordinates
+        // are logical points with a top-left origin, matching the Wayland
+        // backend (no backing-scale multiplication).
         NSPoint m = [NSEvent mouseLocation];
-        CGFloat scale = [g_window backingScaleFactor];
-        g_mouse_x = m.x * scale;
-        g_mouse_y = (frame.size.height - m.y) * scale;
+        g_mouse_x = m.x;
+        g_mouse_y = frame.size.height - m.y;
 
         [g_window makeKeyAndOrderFront:nil];
         [NSApp activateIgnoringOtherApps:YES];
+
+        // Hide the system cursor while the overlay is active. The Wayland
+        // backend achieves the same by setting a NULL pointer cursor.
+        [NSCursor hide];
+
+        // Match the GL drawable and viewport to the (Retina) backing size so
+        // rendering stays sharp at full resolution, even though the app's
+        // coordinate space is logical points.
+        [g_context update];
+        NSRect backing = [g_view convertRectToBacking:[g_view bounds]];
+        glViewport(0, 0, (GLsizei)backing.size.width, (GLsizei)backing.size.height);
 
         return 0;
     }
@@ -135,9 +149,9 @@ void cocoa_get_dimensions(int32_t *width, int32_t *height) {
         *height = 0;
         return;
     }
-    NSRect backing = [g_view convertRectToBacking:[g_view bounds]];
-    *width = (int32_t)backing.size.width;
-    *height = (int32_t)backing.size.height;
+    NSRect bounds = [g_view bounds];
+    *width = (int32_t)bounds.size.width;
+    *height = (int32_t)bounds.size.height;
 }
 
 void cocoa_make_current(void) {
@@ -225,6 +239,7 @@ void cocoa_clear_last_key(void) {
 }
 
 void cocoa_destroy(void) {
+    [NSCursor unhide];
     if (g_context) {
         [g_context clearDrawable];
         g_context = nil;

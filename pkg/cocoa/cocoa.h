@@ -8,8 +8,9 @@
 // Returns 0 on success, non-zero on failure.
 int cocoa_init(void);
 
-// cocoa_get_dimensions reports the drawable size in backing (pixel) units,
-// matching the OpenGL viewport.
+// cocoa_get_dimensions reports the overlay size in logical points (the app's
+// coordinate space, matching the Wayland backend). The GL viewport itself runs
+// at the larger backing/pixel size for sharp Retina rendering.
 void cocoa_get_dimensions(int32_t *width, int32_t *height);
 
 // cocoa_make_current binds the OpenGL context to the calling thread.
@@ -22,7 +23,7 @@ void cocoa_swap_buffers(void);
 // cached mouse position, button state, and last key.
 void cocoa_poll_events(void);
 
-// cocoa_get_mouse_pos reports the cursor position in backing pixels with a
+// cocoa_get_mouse_pos reports the cursor position in logical points with a
 // top-left origin (matching the Wayland backend's convention).
 void cocoa_get_mouse_pos(double *x, double *y);
 
