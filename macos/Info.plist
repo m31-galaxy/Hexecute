@@ -7,7 +7,7 @@
     <key>CFBundleDisplayName</key>
     <string>Hexecute</string>
     <key>CFBundleIdentifier</key>
-    <string>com.thatotherandrew.hexecute</string>
+    <string>app.hexecute</string>
     <key>CFBundleVersion</key>
     <string>0.1.0</string>
     <key>CFBundleShortVersionString</key>
