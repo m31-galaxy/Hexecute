@@ -87,7 +87,12 @@ int cocoa_init(void) {
                                         NSWindowCollectionBehaviorFullScreenAuxiliary];
 
         g_view = [[NSView alloc] initWithFrame:frame];
-        [g_view setWantsBestResolutionOpenGLSurface:YES];
+        // Render in a logical-point coordinate space: keep the drawable sized in
+        // points rather than backing pixels. The shaders compare gl_FragCoord
+        // against the points-based resolution and cursor uniforms (e.g. the
+        // background cursor light), so a backing-pixel drawable offsets anything
+        // that reads gl_FragCoord by the Retina scale factor.
+        [g_view setWantsBestResolutionOpenGLSurface:NO];
         [g_window setContentView:g_view];
 
         NSOpenGLPixelFormatAttribute attrs[] = {
@@ -132,12 +137,11 @@ int cocoa_init(void) {
         // backend achieves the same by setting a NULL pointer cursor.
         [NSCursor hide];
 
-        // Match the GL drawable and viewport to the (Retina) backing size so
-        // rendering stays sharp at full resolution, even though the app's
-        // coordinate space is logical points.
+        // Set the viewport to the logical-point drawable size so gl_FragCoord,
+        // the resolution uniform, and cursor coordinates all share one space.
         [g_context update];
-        NSRect backing = [g_view convertRectToBacking:[g_view bounds]];
-        glViewport(0, 0, (GLsizei)backing.size.width, (GLsizei)backing.size.height);
+        NSRect viewport = [g_view bounds];
+        glViewport(0, 0, (GLsizei)viewport.size.width, (GLsizei)viewport.size.height);
 
         return 0;
     }

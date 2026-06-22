@@ -8,9 +8,9 @@
 // Returns 0 on success, non-zero on failure.
 int cocoa_init(void);
 
-// cocoa_get_dimensions reports the overlay size in logical points (the app's
-// coordinate space, matching the Wayland backend). The GL viewport itself runs
-// at the larger backing/pixel size for sharp Retina rendering.
+// cocoa_get_dimensions reports the overlay size in logical points, which is the
+// single coordinate space used throughout (drawable, viewport, gl_FragCoord,
+// cursor), matching the Wayland backend.
 void cocoa_get_dimensions(int32_t *width, int32_t *height);
 
 // cocoa_make_current binds the OpenGL context to the calling thread.
