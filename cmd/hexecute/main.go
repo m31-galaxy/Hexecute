@@ -8,17 +8,17 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/ThatOtherAndrew/Hexecute/internal/config"
-	"github.com/ThatOtherAndrew/Hexecute/internal/draw"
-	"github.com/ThatOtherAndrew/Hexecute/internal/execute"
-	gestures "github.com/ThatOtherAndrew/Hexecute/internal/gesture"
-	"github.com/ThatOtherAndrew/Hexecute/internal/models"
-	"github.com/ThatOtherAndrew/Hexecute/internal/opengl"
-	"github.com/ThatOtherAndrew/Hexecute/internal/spawn"
-	"github.com/ThatOtherAndrew/Hexecute/internal/stroke"
-	"github.com/ThatOtherAndrew/Hexecute/internal/update"
-	"github.com/ThatOtherAndrew/Hexecute/pkg/wayland"
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/m31-galaxy/Hexecute/internal/config"
+	"github.com/m31-galaxy/Hexecute/internal/draw"
+	"github.com/m31-galaxy/Hexecute/internal/execute"
+	gestures "github.com/m31-galaxy/Hexecute/internal/gesture"
+	"github.com/m31-galaxy/Hexecute/internal/models"
+	"github.com/m31-galaxy/Hexecute/internal/opengl"
+	"github.com/m31-galaxy/Hexecute/internal/spawn"
+	"github.com/m31-galaxy/Hexecute/internal/stroke"
+	"github.com/m31-galaxy/Hexecute/internal/update"
+	"github.com/m31-galaxy/Hexecute/pkg/wayland"
 )
 
 func init() {

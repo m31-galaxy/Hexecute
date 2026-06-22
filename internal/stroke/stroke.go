@@ -5,7 +5,7 @@ package stroke
 import (
 	"math"
 
-	"github.com/ThatOtherAndrew/Hexecute/internal/models"
+	"github.com/m31-galaxy/Hexecute/internal/models"
 )
 
 // Step 1

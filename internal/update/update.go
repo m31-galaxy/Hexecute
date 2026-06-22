@@ -3,8 +3,8 @@ package update
 import (
 	"math"
 
-	"github.com/ThatOtherAndrew/Hexecute/internal/models"
-	"github.com/ThatOtherAndrew/Hexecute/pkg/wayland"
+	"github.com/m31-galaxy/Hexecute/internal/models"
+	"github.com/m31-galaxy/Hexecute/pkg/wayland"
 )
 
 type App struct {

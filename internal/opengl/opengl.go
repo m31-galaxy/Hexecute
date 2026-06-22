@@ -3,9 +3,9 @@ package opengl
 import (
 	"log"
 
-	"github.com/ThatOtherAndrew/Hexecute/internal/models"
-	"github.com/ThatOtherAndrew/Hexecute/internal/shaders"
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/m31-galaxy/Hexecute/internal/models"
+	"github.com/m31-galaxy/Hexecute/internal/shaders"
 )
 
 type App struct {

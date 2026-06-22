@@ -12,19 +12,19 @@ If you're a lucky [Nix](https://nixos.org/) user, you can:
 
 **Try it out without installing:**
 ```bash
-nix run github:ThatOtherAndrew/Hexecute
+nix run github:m31-galaxy/Hexecute
 ```
 
 **Install to your profile:**
 ```bash
-nix profile install github:ThatOtherAndrew/Hexecute
+nix profile install github:m31-galaxy/Hexecute
 ```
 
 **Add to your NixOS configuration:**
 ```nix
 # flake.nix
 {
-  inputs.hexecute.url = "github:ThatOtherAndrew/Hexecute";
+  inputs.hexecute.url = "github:m31-galaxy/Hexecute";
 }
 ```
 ```nix
@@ -38,7 +38,7 @@ nix profile install github:ThatOtherAndrew/Hexecute
 
 ### Executable download
 
-Download the latest version from the [release page](https://github.com/ThatOtherAndrew/Hexecute/releases/latest), and place it somewhere in your `$PATH`.
+Download the latest version from the [release page](https://github.com/m31-galaxy/Hexecute/releases/latest), and place it somewhere in your `$PATH`.
 
 **Don't forget to rename the downloaded binary to `hexecute` and make it executable:**
 ```bash
@@ -50,7 +50,7 @@ chmod +x hexecute
 
 Clone the repository:
 ```bash
-git clone https://github.com/ThatOtherAndrew/Hexecute
+git clone https://github.com/m31-galaxy/Hexecute
 cd Hexecute
 ```
 

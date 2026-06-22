@@ -6,10 +6,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ThatOtherAndrew/Hexecute/internal/models"
-	"github.com/ThatOtherAndrew/Hexecute/internal/spawn"
-	"github.com/ThatOtherAndrew/Hexecute/internal/stroke"
-	"github.com/ThatOtherAndrew/Hexecute/pkg/wayland"
+	"github.com/m31-galaxy/Hexecute/internal/models"
+	"github.com/m31-galaxy/Hexecute/internal/spawn"
+	"github.com/m31-galaxy/Hexecute/internal/stroke"
+	"github.com/m31-galaxy/Hexecute/pkg/wayland"
 )
 
 type App struct {

@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/ThatOtherAndrew/Hexecute/internal/config"
+	"github.com/m31-galaxy/Hexecute/internal/config"
 )
 
 type Point struct {
