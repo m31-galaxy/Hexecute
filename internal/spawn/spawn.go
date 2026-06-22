@@ -4,7 +4,7 @@ import (
 	"math"
 	"math/rand/v2"
 
-	"github.com/ThatOtherAndrew/Hexecute/internal/models"
+	"github.com/m31-galaxy/Hexecute/internal/models"
 )
 
 type App struct {

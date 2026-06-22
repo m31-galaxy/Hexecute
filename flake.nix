@@ -81,7 +81,7 @@
 
           meta = {
             description = "Launch apps by casting spells! 🪄";
-            homepage = "https://github.com/ThatOtherAndrew/Hexecute";
+            homepage = "https://hexecute.app";
             license = lib.licenses.gpl3;
             platforms = lib.platforms.linux ++ lib.platforms.darwin;
           };

@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/ThatOtherAndrew/Hexecute/internal/config"
-	"github.com/ThatOtherAndrew/Hexecute/internal/models"
+	"github.com/m31-galaxy/Hexecute/internal/config"
+	"github.com/m31-galaxy/Hexecute/internal/models"
 )
 
 type App struct {
