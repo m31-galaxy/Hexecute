@@ -65,6 +65,7 @@
             mkdir -p $appBundle/Contents/MacOS $appBundle/Contents/Resources
             mv $out/bin/hexecute $appBundle/Contents/MacOS/hexecute
             cp ${./macos/Info.plist} $appBundle/Contents/Info.plist
+            cp ${./macos/Hexecute.icns} $appBundle/Contents/Resources/Hexecute.icns
             printf 'APPL????' > $appBundle/Contents/PkgInfo
             ln -s ../Applications/Hexecute.app/Contents/MacOS/hexecute $out/bin/hexecute
           '';
