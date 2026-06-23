@@ -25,10 +25,6 @@ func init() {
 	runtime.LockOSThread()
 }
 
-type App struct {
-	*models.App
-}
-
 func main() {
 	learnCommand := flag.String("learn", "", "Learn a new gesture for the specified command")
 	listGestures := flag.Bool("list", false, "List all registered gestures")
@@ -176,10 +172,7 @@ func runOnce(app *models.App) {
 		log.Fatal("Failed to initialize OpenGL:", err)
 	}
 
-	x, y := window.GetCursorPos()
-	app.LastCursorX = float32(x)
-	app.LastCursorY = float32(y)
-
+	resetSession(app, window)
 	runSession(app, window)
 }
 

@@ -74,11 +74,17 @@ func parseHotkey(spec string) (keyCode uint32, modifiers uint32, err error) {
 
 // runMain runs Hexecute as a resident agent on macOS: it keeps a warm GL context
 // and a global hot key, showing/hiding the overlay per cast rather than
-// relaunching, so there is no per-cast startup cost.
-func runMain(app *models.App, settings *config.Settings) {
-	keyCode, modifiers, err := parseHotkey(settings.Hotkey)
+// relaunching, so there is no per-cast startup cost. Relaunching the app
+// (open -a / double-click) reopens this instance and casts too, so a launch is
+// never a no-op; the hot key remains the intended main flow.
+func runMain(app *models.App, _ *config.Settings) {
+	// The hot key is stored in NSUserDefaults (defaults domain app.hexecute), not
+	// the cross-platform settings file. defaultHotkey is seeded as the default.
+	spec := cocoa.HotkeyString(defaultHotkey)
+	keyCode, modifiers, err := parseHotkey(spec)
 	if err != nil {
-		log.Printf("Invalid hotkey %q (%v); using default %q", settings.Hotkey, err, defaultHotkey)
+		log.Printf("Invalid hotkey %q (%v); using default %q", spec, err, defaultHotkey)
+		spec = defaultHotkey
 		keyCode, modifiers, _ = parseHotkey(defaultHotkey)
 	}
 
@@ -95,10 +101,10 @@ func runMain(app *models.App, settings *config.Settings) {
 	if err := window.RegisterHotkey(keyCode, modifiers); err != nil {
 		log.Fatal("Failed to register global hotkey:", err)
 	}
-	log.Printf("Hexecute is running; press %s to cast a gesture.", settings.Hotkey)
+	log.Printf("Hexecute is running; press %s (or relaunch the app) to cast a gesture.", spec)
 
 	for {
-		window.WaitForHotkey()
+		window.WaitForShow()
 		window.Show()
 		resetSession(app, window)
 		runSession(app, window)

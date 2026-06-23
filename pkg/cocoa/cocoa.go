@@ -5,11 +5,15 @@ package cocoa
 /*
 #cgo darwin LDFLAGS: -framework Cocoa -framework OpenGL -framework Carbon
 #cgo darwin CFLAGS: -Wno-deprecated-declarations
+#include <stdlib.h>
 #include "cocoa.h"
 */
 import "C"
 
-import "fmt"
+import (
+	"fmt"
+	"unsafe"
+)
 
 // CocoaError describes a failure setting up the macOS overlay window.
 type CocoaError struct {
@@ -71,7 +75,7 @@ func (w *CocoaWindow) Hide() {
 	C.cocoa_hide()
 }
 
-// RegisterHotkey installs a system-wide hot key that wakes WaitForHotkey.
+// RegisterHotkey installs a system-wide hot key that wakes WaitForShow.
 func (w *CocoaWindow) RegisterHotkey(keyCode, modifiers uint32) error {
 	if C.cocoa_register_hotkey(C.uint32_t(keyCode), C.uint32_t(modifiers)) != 0 {
 		return &CocoaError{"failed to register global hotkey"}
@@ -79,9 +83,24 @@ func (w *CocoaWindow) RegisterHotkey(keyCode, modifiers uint32) error {
 	return nil
 }
 
-// WaitForHotkey blocks until the registered global hot key is pressed.
-func (w *CocoaWindow) WaitForHotkey() {
-	C.cocoa_wait_for_hotkey()
+// WaitForShow blocks until a show is requested, either by the registered global
+// hot key or by a relaunch of the resident agent (reopen Apple event).
+func (w *CocoaWindow) WaitForShow() {
+	C.cocoa_wait_for_show()
+}
+
+// HotkeyString returns the hot-key spec stored in NSUserDefaults (defaults
+// domain app.hexecute, key "hotkey"), seeding fallback as the registered
+// default so `defaults read app.hexecute hotkey` works on first run.
+func HotkeyString(fallback string) string {
+	cf := C.CString(fallback)
+	defer C.free(unsafe.Pointer(cf))
+	cs := C.cocoa_get_hotkey(cf)
+	if cs == nil {
+		return fallback
+	}
+	defer C.free(unsafe.Pointer(cs))
+	return C.GoString(cs)
 }
 
 func (w *CocoaWindow) GetSize() (int, int) {

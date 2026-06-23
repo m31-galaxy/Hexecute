@@ -2,6 +2,7 @@
 #import <OpenGL/OpenGL.h>
 #import <OpenGL/gl3.h>
 #import <Carbon/Carbon.h>
+#include <string.h>
 #include "cocoa.h"
 
 // XKB keysym for Escape. main.go compares the reported key against this value,
@@ -20,8 +21,9 @@ static uint32_t g_last_key = 0;
 static uint32_t g_last_key_state = 0;
 static int g_input_disabled = 0;
 
-// Global hotkey state (resident mode).
-static volatile int g_hotkey_pressed = 0;
+// Show-request state (resident mode): set by both the Carbon hotkey and the
+// reopen/relaunch handler, and consumed by cocoa_wait_for_show.
+static volatile int g_show_requested = 0;
 static EventHotKeyRef g_hotkey_ref = NULL;
 static EventHandlerRef g_hotkey_handler = NULL;
 
@@ -38,6 +40,45 @@ static EventHandlerRef g_hotkey_handler = NULL;
     return YES;
 }
 @end
+
+// request_show flags a show request and wakes the manually-pumped event loop so
+// a blocking cocoa_wait_for_show() returns promptly. Both the Carbon hotkey
+// handler and the reopen (relaunch) handler funnel through here.
+static void request_show(void) {
+    g_show_requested = 1;
+    @autoreleasepool {
+        NSEvent *wake = [NSEvent otherEventWithType:NSEventTypeApplicationDefined
+                                           location:NSMakePoint(0, 0)
+                                      modifierFlags:0
+                                          timestamp:0
+                                       windowNumber:0
+                                            context:nil
+                                            subtype:0
+                                              data1:0
+                                              data2:0];
+        if (wake) {
+            [NSApp postEvent:wake atStart:YES];
+        }
+    }
+}
+
+// macOS keeps a single instance per app, so launching Hexecute while the
+// resident agent is already running delivers a reopen Apple event rather than
+// spawning a new process. Treat that as a show request so a relaunch casts
+// (like a first launch) instead of silently activating the hidden agent.
+@interface HexAppDelegate : NSObject <NSApplicationDelegate>
+@end
+
+@implementation HexAppDelegate
+- (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag {
+    (void)sender;
+    (void)flag;
+    request_show();
+    return YES;
+}
+@end
+
+static HexAppDelegate *g_app_delegate = nil;
 
 // Convert a macOS virtual key code to an XKB keysym. Only the keys the app
 // reacts to need mapping; everything else reports 0 (no key).
@@ -79,6 +120,14 @@ int cocoa_init(void) {
         [NSApplication sharedApplication];
         // Accessory: foreground-capable overlay without a Dock icon.
         [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
+
+        // Install a delegate and finish launching so reopen Apple events (from a
+        // relaunch of the running agent) are dispatched while we pump the event
+        // loop manually. We never call [NSApp run]; finishLaunching also lets the
+        // agent register with LaunchServices so relaunches reopen this instance.
+        g_app_delegate = [[HexAppDelegate alloc] init];
+        [NSApp setDelegate:g_app_delegate];
+        [NSApp finishLaunching];
 
         NSScreen *screen = [NSScreen mainScreen];
         if (!screen) {
@@ -138,12 +187,11 @@ int cocoa_init(void) {
 
         [g_context makeCurrentContext];
 
-        // The window is created hidden; cocoa_show() orders it front and starts
-        // capturing input. This lets the resident agent keep a warm GL context
-        // and only present the overlay on demand. Seed the cursor and viewport
-        // so OpenGL initialisation (which runs before the first show) is valid.
-        seed_mouse_global();
-
+        // The window is created hidden; cocoa_show() orders it front, seeds the
+        // cursor, and starts capturing input. This lets the resident agent keep
+        // a warm GL context and only present the overlay on demand. Set up the
+        // viewport so OpenGL initialisation (which runs before the first show) is
+        // valid; the cursor is seeded by cocoa_show before anything reads it.
         [g_context update];
         NSRect viewport = [g_view bounds];
         glViewport(0, 0, (GLsizei)viewport.size.width, (GLsizei)viewport.size.height);
@@ -160,7 +208,7 @@ void cocoa_show(void) {
         g_button_state = 0;
         g_last_key = 0;
         g_last_key_state = 0;
-        g_hotkey_pressed = 0;
+        g_show_requested = 0;
 
         if (g_window) {
             [g_window setIgnoresMouseEvents:NO];
@@ -188,31 +236,17 @@ void cocoa_hide(void) {
             [g_window orderOut:nil];
         }
         [NSApp deactivate];
-        g_hotkey_pressed = 0;
+        g_show_requested = 0;
     }
 }
 
-// Carbon hot-key handler: flag the press and wake the event loop so a blocking
-// cocoa_wait_for_hotkey() returns promptly.
+// Carbon hot-key handler: turn the press into a show request, which wakes a
+// blocking cocoa_wait_for_show().
 static OSStatus hotkey_handler(EventHandlerCallRef next, EventRef event, void *userData) {
     (void)next;
     (void)event;
     (void)userData;
-    g_hotkey_pressed = 1;
-    @autoreleasepool {
-        NSEvent *wake = [NSEvent otherEventWithType:NSEventTypeApplicationDefined
-                                           location:NSMakePoint(0, 0)
-                                      modifierFlags:0
-                                          timestamp:0
-                                       windowNumber:0
-                                            context:nil
-                                            subtype:0
-                                              data1:0
-                                              data2:0];
-        if (wake) {
-            [NSApp postEvent:wake atStart:YES];
-        }
-    }
+    request_show();
     return noErr;
 }
 
@@ -250,10 +284,11 @@ int cocoa_register_hotkey(uint32_t keyCode, uint32_t modifiers) {
     }
 }
 
-// cocoa_wait_for_hotkey blocks (pumping the event loop, so the hot key and other
-// events are dispatched) until the registered hot key fires.
-void cocoa_wait_for_hotkey(void) {
-    while (!g_hotkey_pressed) {
+// cocoa_wait_for_show blocks (pumping the event loop, so the hot key, reopen
+// Apple event, and other events are dispatched) until a show is requested by the
+// hot key or a relaunch.
+void cocoa_wait_for_show(void) {
+    while (!g_show_requested) {
         @autoreleasepool {
             NSEvent *event = [NSApp nextEventMatchingMask:NSEventMaskAny
                                                 untilDate:[NSDate distantFuture]
@@ -264,7 +299,25 @@ void cocoa_wait_for_hotkey(void) {
             }
         }
     }
-    g_hotkey_pressed = 0;
+    g_show_requested = 0;
+}
+
+// cocoa_get_hotkey returns the hot-key spec stored in NSUserDefaults (defaults
+// domain app.hexecute, matching the bundle id), seeding fallback as the
+// registered default so `defaults read app.hexecute hotkey` works on first run.
+// The returned string is heap-allocated; the caller frees it.
+const char *cocoa_get_hotkey(const char *fallback) {
+    @autoreleasepool {
+        NSUserDefaults *d = [NSUserDefaults standardUserDefaults];
+        if (fallback) {
+            [d registerDefaults:@{@"hotkey": [NSString stringWithUTF8String:fallback]}];
+        }
+        NSString *hk = [d stringForKey:@"hotkey"];
+        if (!hk) {
+            return NULL;
+        }
+        return strdup([hk UTF8String]);
+    }
 }
 
 void cocoa_get_dimensions(int32_t *width, int32_t *height) {
@@ -276,10 +329,6 @@ void cocoa_get_dimensions(int32_t *width, int32_t *height) {
     NSRect bounds = [g_view bounds];
     *width = (int32_t)bounds.size.width;
     *height = (int32_t)bounds.size.height;
-}
-
-void cocoa_make_current(void) {
-    [g_context makeCurrentContext];
 }
 
 void cocoa_swap_buffers(void) {

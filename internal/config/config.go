@@ -12,10 +12,6 @@ import (
 // TODO: migrate other settings
 type Settings struct {
 	OverlayAlpha float32 `json:"overlay_alpha"`
-	// Hotkey is the global shortcut that shows the overlay in the macOS resident
-	// agent, e.g. "cmd+option+space". Ignored on other platforms (which launch
-	// per keypress via the compositor). Modifiers: cmd/option/ctrl/shift.
-	Hotkey string `json:"hotkey"`
 }
 
 func GetPath() (string, error) {
@@ -50,7 +46,6 @@ func LoadSettings() (*Settings, error) {
 
 	defaultSettings := &Settings{
 		OverlayAlpha: 0.75,
-		Hotkey:       "cmd+option+space",
 	}
 
 	data, err := os.ReadFile(settingsPath)
@@ -90,11 +85,6 @@ func LoadSettings() (*Settings, error) {
 		log.Printf("Invalid overlay_alpha value %.2f, must be between 0.0 and 1.0, using default %.2f",
 			settings.OverlayAlpha, defaultSettings.OverlayAlpha)
 		settings.OverlayAlpha = defaultSettings.OverlayAlpha
-	}
-
-	// Fall back to the default hotkey if unset (e.g. older settings files).
-	if settings.Hotkey == "" {
-		settings.Hotkey = defaultSettings.Hotkey
 	}
 
 	return settings, nil

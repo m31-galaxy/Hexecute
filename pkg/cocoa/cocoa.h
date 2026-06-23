@@ -21,16 +21,20 @@ void cocoa_hide(void);
 // Returns 0 on success.
 int cocoa_register_hotkey(uint32_t keyCode, uint32_t modifiers);
 
-// cocoa_wait_for_hotkey blocks, pumping the event loop, until the hot key fires.
-void cocoa_wait_for_hotkey(void);
+// cocoa_wait_for_show blocks, pumping the event loop, until a show is requested
+// by the hot key or by a relaunch (reopen Apple event).
+void cocoa_wait_for_show(void);
+
+// cocoa_get_hotkey returns the hot-key spec stored in NSUserDefaults (defaults
+// domain app.hexecute), seeding fallback as the registered default. Returns a
+// heap-allocated string the caller must free, or NULL if unset and fallback is
+// NULL.
+const char *cocoa_get_hotkey(const char *fallback);
 
 // cocoa_get_dimensions reports the overlay size in logical points, which is the
 // single coordinate space used throughout (drawable, viewport, gl_FragCoord,
 // cursor), matching the Wayland backend.
 void cocoa_get_dimensions(int32_t *width, int32_t *height);
-
-// cocoa_make_current binds the OpenGL context to the calling thread.
-void cocoa_make_current(void);
 
 // cocoa_swap_buffers presents the current frame.
 void cocoa_swap_buffers(void);
