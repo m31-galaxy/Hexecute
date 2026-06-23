@@ -4,9 +4,25 @@
 #include <stdint.h>
 
 // cocoa_init creates the shared application, a transparent borderless
-// fullscreen overlay window, and a current OpenGL 4.1 core context.
-// Returns 0 on success, non-zero on failure.
+// fullscreen overlay window (initially hidden), and a current OpenGL 4.1 core
+// context. Returns 0 on success, non-zero on failure.
 int cocoa_init(void);
+
+// cocoa_show orders the overlay front, activates it, hides the system cursor,
+// and (re)enables input capture.
+void cocoa_show(void);
+
+// cocoa_hide orders the overlay out, restores the cursor, and yields activation.
+void cocoa_hide(void);
+
+// cocoa_register_hotkey installs a system-wide hot key (Carbon API; no
+// Accessibility permission needed). keyCode is a macOS virtual key code;
+// modifiers are Carbon masks (cmdKey/optionKey/controlKey/shiftKey).
+// Returns 0 on success.
+int cocoa_register_hotkey(uint32_t keyCode, uint32_t modifiers);
+
+// cocoa_wait_for_hotkey blocks, pumping the event loop, until the hot key fires.
+void cocoa_wait_for_hotkey(void);
 
 // cocoa_get_dimensions reports the overlay size in logical points, which is the
 // single coordinate space used throughout (drawable, viewport, gl_FragCoord,

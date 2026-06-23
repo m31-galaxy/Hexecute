@@ -108,11 +108,24 @@ bindsym $mod+space exec hexecute
 
 #### macOS
 
-Hexecute is launched on demand rather than running resident, so bind it to a global hotkey using a tool of your choice — for example [skhd](https://github.com/koekeishiya/skhd), [Raycast](https://www.raycast.com/), or an Automator Quick Action assigned a keyboard shortcut. An example `~/.skhdrc` entry using `cmd` + `space` (pick a combination not already taken by Spotlight):
+On macOS, Hexecute runs as a **resident background agent**: it stays alive with a warm GL context and registers its own global hotkey, so casting a gesture is instant (no per-launch startup cost) and needs no third-party hotkey tool.
 
+The default hotkey is **⌘ + ⌥ + Space** (Cmd+Option+Space). Press it to show the overlay; draw a gesture, or press Esc to dismiss. Change it in `~/.config/hexecute/settings.json`:
+
+```json
+{
+  "hotkey": "cmd+option+space"
+}
 ```
-cmd - space : open -a /Applications/Hexecute.app
+Modifiers are `cmd`, `option` (alias `alt`), `ctrl`, and `shift`; the key can be a letter, digit, `space`, `return`, `tab`, or `f1`–`f12`. At least one modifier is required. Registering the hotkey needs **no Accessibility permission** (it uses the Carbon hot-key API).
+
+To have the agent always available, start it at login with the bundled LaunchAgent ([`macos/app.hexecute.plist`](macos/app.hexecute.plist)), after copying `Hexecute.app` into `/Applications`:
+
+```bash
+cp macos/app.hexecute.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/app.hexecute.plist   # start now + at every login
 ```
+To stop it: `launchctl unload ~/Library/LaunchAgents/app.hexecute.plist`.
 
 > Note: depending on your macOS version, drawing the overlay over other applications may require granting Hexecute **Screen Recording** and/or **Accessibility** permission under System Settings → Privacy & Security. Using the `.app` bundle (rather than a bare binary) gives Hexecute a stable identity so these permissions persist across launches.
 

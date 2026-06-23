@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/m31-galaxy/Hexecute/internal/models"
-	"github.com/m31-galaxy/Hexecute/pkg/wayland"
+	"github.com/m31-galaxy/Hexecute/internal/platform"
 )
 
 type App struct {

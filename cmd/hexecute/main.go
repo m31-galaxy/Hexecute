@@ -15,10 +15,10 @@ import (
 	gestures "github.com/m31-galaxy/Hexecute/internal/gesture"
 	"github.com/m31-galaxy/Hexecute/internal/models"
 	"github.com/m31-galaxy/Hexecute/internal/opengl"
+	"github.com/m31-galaxy/Hexecute/internal/platform"
 	"github.com/m31-galaxy/Hexecute/internal/spawn"
 	"github.com/m31-galaxy/Hexecute/internal/stroke"
 	"github.com/m31-galaxy/Hexecute/internal/update"
-	"github.com/m31-galaxy/Hexecute/pkg/wayland"
 )
 
 func init() {
@@ -92,12 +92,6 @@ func main() {
 		return
 	}
 
-	window, err := platform.NewWindow()
-	if err != nil {
-		log.Fatal("Failed to create window:", err)
-	}
-	defer window.Destroy()
-
 	settings, err := config.LoadSettings()
 	if err != nil {
 		log.Fatal("Failed to load settings:", err)
@@ -112,32 +106,80 @@ func main() {
 		app.LearnMode = true
 		app.LearnCommand = *learnCommand
 		log.Printf("Learn mode: Draw the gesture 3 times for command '%s'", *learnCommand)
-	} else {
-		gestures, err := gestures.LoadGestures()
-		if err != nil {
-			log.Fatal("Failed to load gestures:", err)
-		}
-		app.SavedGestures = gestures
-		log.Printf("Loaded %d gesture(s)", len(gestures))
+		runOnce(app)
+		return
 	}
 
-	opengl := opengl.New(app)
-	if err := opengl.InitGL(); err != nil {
-		log.Fatal("Failed to initialize OpenGL:", err)
+	loaded, err := gestures.LoadGestures()
+	if err != nil {
+		log.Fatal("Failed to load gestures:", err)
+	}
+	app.SavedGestures = loaded
+	log.Printf("Loaded %d gesture(s)", len(loaded))
+
+	// runMain is build-tagged: a single per-launch session on Linux, or a
+	// resident hotkey-driven loop on macOS.
+	runMain(app, settings)
+}
+
+// initGLAndWarm compiles shaders and pumps a few clear frames so the first real
+// frame is ready.
+func initGLAndWarm(app *models.App, window platform.Window) error {
+	o := opengl.New(app)
+	if err := o.InitGL(); err != nil {
+		return err
 	}
 
 	gl.ClearColor(0, 0, 0, 0)
-
 	for range 5 {
 		window.PollEvents()
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 		window.SwapBuffers()
+	}
+	return nil
+}
+
+// resetSession clears per-cast state so a reused window (resident mode) starts a
+// fresh gesture each time the overlay is shown.
+func resetSession(app *models.App, window platform.Window) {
+	app.StartTime = time.Now()
+	app.IsExiting = false
+	app.IsDrawing = false
+	app.Points = nil
+	app.Particles = nil
+	app.CursorVelocity = 0
+	app.SmoothVelocity = 0
+	app.SmoothRotation = 0
+	app.SmoothDrawing = 0
+
+	x, y := window.GetCursorPos()
+	app.LastCursorX = float32(x)
+	app.LastCursorY = float32(y)
+}
+
+// runOnce creates a window, runs a single gesture session, and tears it down.
+// Used for `--learn` (all platforms) and the per-launch path on non-macOS.
+func runOnce(app *models.App) {
+	window, err := platform.NewWindow()
+	if err != nil {
+		log.Fatal("Failed to create window:", err)
+	}
+	defer window.Destroy()
+
+	if err := initGLAndWarm(app, window); err != nil {
+		log.Fatal("Failed to initialize OpenGL:", err)
 	}
 
 	x, y := window.GetCursorPos()
 	app.LastCursorX = float32(x)
 	app.LastCursorY = float32(y)
 
+	runSession(app, window)
+}
+
+// runSession runs the gesture-capture loop on an already-shown window, returning
+// when the cast ends (gesture executed, Esc, or learn complete).
+func runSession(app *models.App, window platform.Window) {
 	lastTime := time.Now()
 	var wasPressed bool
 

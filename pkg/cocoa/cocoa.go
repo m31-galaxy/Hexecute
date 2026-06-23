@@ -3,7 +3,7 @@
 package cocoa
 
 /*
-#cgo darwin LDFLAGS: -framework Cocoa -framework OpenGL
+#cgo darwin LDFLAGS: -framework Cocoa -framework OpenGL -framework Carbon
 #cgo darwin CFLAGS: -Wno-deprecated-declarations
 #include "cocoa.h"
 */
@@ -27,8 +27,10 @@ type CocoaWindow struct {
 	width, height int32
 }
 
-// NewCocoaWindow creates the overlay window and a current GL context.
-func NewCocoaWindow() (*CocoaWindow, error) {
+// NewHiddenWindow creates the overlay window and a current GL context without
+// showing it. The resident (macOS) driver uses this so it can keep a warm GL
+// context and present the overlay on demand via Show/Hide.
+func NewHiddenWindow() (*CocoaWindow, error) {
 	if ret := C.cocoa_init(); ret != 0 {
 		return nil, &CocoaError{fmt.Sprintf("failed to initialise Cocoa window (code %d)", int(ret))}
 	}
@@ -45,6 +47,41 @@ func NewCocoaWindow() (*CocoaWindow, error) {
 	}
 
 	return w, nil
+}
+
+// NewCocoaWindow creates the overlay window, a current GL context, and shows it
+// immediately. This satisfies platform.NewWindow for the per-launch path (e.g.
+// `--learn`), matching the Wayland backend's "visible on creation" behaviour.
+func NewCocoaWindow() (*CocoaWindow, error) {
+	w, err := NewHiddenWindow()
+	if err != nil {
+		return nil, err
+	}
+	C.cocoa_show()
+	return w, nil
+}
+
+// Show orders the overlay front and starts capturing input.
+func (w *CocoaWindow) Show() {
+	C.cocoa_show()
+}
+
+// Hide orders the overlay out and yields activation.
+func (w *CocoaWindow) Hide() {
+	C.cocoa_hide()
+}
+
+// RegisterHotkey installs a system-wide hot key that wakes WaitForHotkey.
+func (w *CocoaWindow) RegisterHotkey(keyCode, modifiers uint32) error {
+	if C.cocoa_register_hotkey(C.uint32_t(keyCode), C.uint32_t(modifiers)) != 0 {
+		return &CocoaError{"failed to register global hotkey"}
+	}
+	return nil
+}
+
+// WaitForHotkey blocks until the registered global hot key is pressed.
+func (w *CocoaWindow) WaitForHotkey() {
+	C.cocoa_wait_for_hotkey()
 }
 
 func (w *CocoaWindow) GetSize() (int, int) {

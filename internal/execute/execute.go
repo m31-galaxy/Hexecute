@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/m31-galaxy/Hexecute/internal/models"
+	"github.com/m31-galaxy/Hexecute/internal/platform"
 	"github.com/m31-galaxy/Hexecute/internal/spawn"
 	"github.com/m31-galaxy/Hexecute/internal/stroke"
-	"github.com/m31-galaxy/Hexecute/pkg/wayland"
 )
 
 type App struct {
