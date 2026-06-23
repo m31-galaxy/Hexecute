@@ -2,7 +2,7 @@
 
 package platform
 
-import "github.com/ThatOtherAndrew/Hexecute/pkg/cocoa"
+import "github.com/m31-galaxy/Hexecute/pkg/cocoa"
 
 // Compile-time check that the Cocoa backend satisfies the Window interface.
 var _ Window = (*cocoa.CocoaWindow)(nil)

@@ -2,7 +2,7 @@
 
 package platform
 
-import "github.com/ThatOtherAndrew/Hexecute/pkg/wayland"
+import "github.com/m31-galaxy/Hexecute/pkg/wayland"
 
 // Compile-time check that the Wayland backend satisfies the Window interface.
 var _ Window = (*wayland.WaylandWindow)(nil)
