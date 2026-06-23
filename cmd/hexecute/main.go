@@ -33,6 +33,7 @@ func main() {
 	learnCommand := flag.String("learn", "", "Learn a new gesture for the specified command")
 	listGestures := flag.Bool("list", false, "List all registered gestures")
 	removeGesture := flag.String("remove", "", "Remove a gesture by command name")
+	background := flag.Bool("background", false, "macOS: run as a resident agent that shows the overlay on the global hotkey, instead of drawing a gesture immediately (used by the autostart LaunchAgent)")
 	flag.Parse()
 
 	if flag.NArg() > 0 {
@@ -117,9 +118,14 @@ func main() {
 	app.SavedGestures = loaded
 	log.Printf("Loaded %d gesture(s)", len(loaded))
 
-	// runMain is build-tagged: a single per-launch session on Linux, or a
-	// resident hotkey-driven loop on macOS.
-	runMain(app, settings)
+	if *background {
+		// Resident background agent: wait for the global hotkey (macOS). On
+		// Linux there is no resident mode, so runMain falls back to one session.
+		runMain(app, settings)
+	} else {
+		// Manual launch (double-click / open / terminal): draw a gesture now.
+		runOnce(app)
+	}
 }
 
 // initGLAndWarm compiles shaders and pumps a few clear frames so the first real

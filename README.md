@@ -108,7 +108,10 @@ bindsym $mod+space exec hexecute
 
 #### macOS
 
-On macOS, Hexecute runs as a **resident background agent**: it stays alive with a warm GL context and registers its own global hotkey, so casting a gesture is instant (no per-launch startup cost) and needs no third-party hotkey tool.
+Hexecute supports two launch modes on macOS:
+
+- **Manual launch** — double-click `Hexecute.app` (or `open -a Hexecute`, or run the binary with no arguments) to **draw a gesture immediately**: the overlay appears, you cast once, and it dismisses.
+- **Resident agent** — run it with `--background` to stay alive with a warm GL context and register a global hotkey, so casting is instant and needs no third-party hotkey tool. This is the mode the autostart LaunchAgent uses.
 
 The default hotkey is **⌘ + ⌥ + Space** (Cmd+Option+Space). Press it to show the overlay; draw a gesture, or press Esc to dismiss. Change it in `~/.config/hexecute/settings.json`:
 
@@ -117,15 +120,17 @@ The default hotkey is **⌘ + ⌥ + Space** (Cmd+Option+Space). Press it to show
   "hotkey": "cmd+option+space"
 }
 ```
-Modifiers are `cmd`, `option` (alias `alt`), `ctrl`, and `shift`; the key can be a letter, digit, `space`, `return`, `tab`, or `f1`–`f12`. At least one modifier is required. Registering the hotkey needs **no Accessibility permission** (it uses the Carbon hot-key API).
+Modifiers are `cmd`, `option` (alias `alt`), `ctrl`, and `shift`; the key can be a letter, digit, `space`, `return`, `tab`, or `f1`–`f12`. At least one modifier is required. Registering the hotkey needs **no Accessibility permission** (it uses the Carbon hot-key API). Pick a combination that isn't already a system shortcut (e.g. ⌘⌥Space is macOS's Finder search).
 
-To have the agent always available, start it at login with the bundled LaunchAgent ([`macos/app.hexecute.plist`](macos/app.hexecute.plist)), after copying `Hexecute.app` into `/Applications`:
+To run the resident agent at login, install the bundled LaunchAgent ([`macos/app.hexecute.plist`](macos/app.hexecute.plist)) — which launches it with `--background` — after copying `Hexecute.app` into `/Applications`:
 
 ```bash
 cp macos/app.hexecute.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/app.hexecute.plist   # start now + at every login
 ```
 To stop it: `launchctl unload ~/Library/LaunchAgents/app.hexecute.plist`.
+
+> Note: once the resident agent is running, double-clicking `Hexecute.app` will just activate the existing instance (macOS keeps a single instance per app) rather than starting a fresh gesture — use the hotkey to cast. The immediate-draw behaviour is for when the agent isn't running.
 
 > Note: depending on your macOS version, drawing the overlay over other applications may require granting Hexecute **Screen Recording** and/or **Accessibility** permission under System Settings → Privacy & Security. Using the `.app` bundle (rather than a bare binary) gives Hexecute a stable identity so these permissions persist across launches.
 
