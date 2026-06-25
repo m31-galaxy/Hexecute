@@ -317,8 +317,13 @@ void cocoa_setup_menu_bar(void) {
         }
 
         g_status_controller = [[HexStatusController alloc] init];
-        g_status_item = [[NSStatusBar systemStatusBar]
-            statusItemWithLength:NSVariableStatusItemLength];
+
+        // statusItemWithLength: returns an autoreleased item and the system
+        // status bar does not keep a reliable strong reference, so under manual
+        // reference counting (cgo compiles this without ARC) it must be retained
+        // or it is deallocated when this pool drains and the icon never appears.
+        g_status_item = [[[NSStatusBar systemStatusBar]
+            statusItemWithLength:NSVariableStatusItemLength] retain];
 
         // Prefer a template SF Symbol (the system tints it for light/dark menu
         // bars); wand.and.stars matches the spell-casting metaphor. Fall back to
@@ -488,6 +493,7 @@ void cocoa_destroy(void) {
     [NSCursor unhide];
     if (g_status_item) {
         [[NSStatusBar systemStatusBar] removeStatusItem:g_status_item];
+        [g_status_item release];
         g_status_item = nil;
     }
     if (g_context) {
