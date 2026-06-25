@@ -83,6 +83,13 @@ func (w *CocoaWindow) RegisterHotkey(keyCode, modifiers uint32) error {
 	return nil
 }
 
+// SetupMenuBar adds a status-bar (menu bar) item for the resident agent, with a
+// menu to cast on demand or quit. macOS-only; called from the background agent
+// path, so it is not part of the platform.Window interface.
+func (w *CocoaWindow) SetupMenuBar() {
+	C.cocoa_setup_menu_bar()
+}
+
 // WaitForShow blocks until a show is requested, either by the registered global
 // hot key or by a relaunch of the resident agent (reopen Apple event).
 func (w *CocoaWindow) WaitForShow() {

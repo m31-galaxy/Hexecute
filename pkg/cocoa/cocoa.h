@@ -21,6 +21,10 @@ void cocoa_hide(void);
 // Returns 0 on success.
 int cocoa_register_hotkey(uint32_t keyCode, uint32_t modifiers);
 
+// cocoa_setup_menu_bar adds a status-bar (menu bar) item for the resident agent,
+// with a menu to cast on demand or quit. Idempotent; must run on the main thread.
+void cocoa_setup_menu_bar(void);
+
 // cocoa_wait_for_show blocks, pumping the event loop, until a show is requested
 // by the hot key or by a relaunch (reopen Apple event).
 void cocoa_wait_for_show(void);

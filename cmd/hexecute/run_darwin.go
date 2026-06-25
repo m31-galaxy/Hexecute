@@ -101,6 +101,11 @@ func runMain(app *models.App, _ *config.Settings) {
 	if err := window.RegisterHotkey(keyCode, modifiers); err != nil {
 		log.Fatal("Failed to register global hotkey:", err)
 	}
+
+	// Add a menu-bar item so the accessory agent (no Dock icon) is visible and
+	// can be cast or quit from the menu bar, not only via the hot key.
+	window.SetupMenuBar()
+
 	log.Printf("Hexecute is running; press %s (or relaunch the app) to cast a gesture.", spec)
 
 	for {

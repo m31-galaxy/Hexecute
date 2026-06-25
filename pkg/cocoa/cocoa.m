@@ -80,6 +80,29 @@ static void request_show(void) {
 
 static HexAppDelegate *g_app_delegate = nil;
 
+// Menu-bar status item for the resident agent. The agent runs as an accessory
+// (no Dock icon), so the status item is the only visible affordance: it shows
+// Hexecute is running and offers a menu to cast on demand or quit.
+static NSStatusItem *g_status_item = nil;
+
+// Targets for the status-item menu. cast funnels through request_show (the same
+// path as the hot key and relaunch); quit terminates the resident agent.
+@interface HexStatusController : NSObject
+@end
+
+@implementation HexStatusController
+- (void)cast:(id)sender {
+    (void)sender;
+    request_show();
+}
+- (void)quit:(id)sender {
+    (void)sender;
+    [NSApp terminate:nil];
+}
+@end
+
+static HexStatusController *g_status_controller = nil;
+
 // Convert a macOS virtual key code to an XKB keysym. Only the keys the app
 // reacts to need mapping; everything else reports 0 (no key).
 static uint32_t map_keycode(unsigned short keyCode) {
@@ -284,6 +307,56 @@ int cocoa_register_hotkey(uint32_t keyCode, uint32_t modifiers) {
     }
 }
 
+// cocoa_setup_menu_bar adds a status-bar item (right side of the menu bar) for
+// the resident agent, with a menu to cast on demand or quit. Idempotent and a
+// no-op if a status item already exists. Must run on the main thread.
+void cocoa_setup_menu_bar(void) {
+    @autoreleasepool {
+        if (g_status_item) {
+            return;
+        }
+
+        g_status_controller = [[HexStatusController alloc] init];
+        g_status_item = [[NSStatusBar systemStatusBar]
+            statusItemWithLength:NSVariableStatusItemLength];
+
+        // Prefer a template SF Symbol (the system tints it for light/dark menu
+        // bars); wand.and.stars matches the spell-casting metaphor. Fall back to
+        // a glyph title if the symbol is unavailable. LSMinimumSystemVersion is
+        // 11.0, where imageWithSystemSymbolName exists.
+        NSImage *icon = nil;
+        if (@available(macOS 11.0, *)) {
+            icon = [NSImage imageWithSystemSymbolName:@"wand.and.stars"
+                            accessibilityDescription:@"Hexecute"];
+        }
+        if (icon) {
+            [icon setTemplate:YES];
+            g_status_item.button.image = icon;
+        } else {
+            g_status_item.button.title = @"✦";
+        }
+        g_status_item.button.toolTip = @"Hexecute";
+
+        NSMenu *menu = [[NSMenu alloc] init];
+
+        NSMenuItem *castItem = [[NSMenuItem alloc] initWithTitle:@"Cast Gesture"
+                                                          action:@selector(cast:)
+                                                   keyEquivalent:@""];
+        [castItem setTarget:g_status_controller];
+        [menu addItem:castItem];
+
+        [menu addItem:[NSMenuItem separatorItem]];
+
+        NSMenuItem *quitItem = [[NSMenuItem alloc] initWithTitle:@"Quit Hexecute"
+                                                          action:@selector(quit:)
+                                                   keyEquivalent:@"q"];
+        [quitItem setTarget:g_status_controller];
+        [menu addItem:quitItem];
+
+        g_status_item.menu = menu;
+    }
+}
+
 // cocoa_wait_for_show blocks (pumping the event loop, so the hot key, reopen
 // Apple event, and other events are dispatched) until a show is requested by the
 // hot key or a relaunch.
@@ -413,6 +486,10 @@ void cocoa_clear_last_key(void) {
 
 void cocoa_destroy(void) {
     [NSCursor unhide];
+    if (g_status_item) {
+        [[NSStatusBar systemStatusBar] removeStatusItem:g_status_item];
+        g_status_item = nil;
+    }
     if (g_context) {
         [g_context clearDrawable];
         g_context = nil;
