@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/m31-galaxy/Hexecute/internal/models"
-	"github.com/m31-galaxy/Hexecute/pkg/wayland"
+	"github.com/m31-galaxy/Hexecute/internal/platform"
 )
 
 type App struct {
@@ -17,7 +17,7 @@ func New(app *models.App) *App {
 	return &App{app: app}
 }
 
-func (a *App) Draw(window *wayland.WaylandWindow) {
+func (a *App) Draw(window platform.Window) {
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
 	currentTime := float32(time.Since(a.app.StartTime).Seconds())
@@ -37,7 +37,7 @@ func (a *App) Draw(window *wayland.WaylandWindow) {
 }
 
 func (a *App) drawLine(
-	window *wayland.WaylandWindow,
+	window platform.Window,
 	baseThickness, baseAlpha, currentTime float32,
 ) {
 	if len(a.app.Points) < 2 {
@@ -128,7 +128,7 @@ func (a *App) drawLine(
 	gl.BindVertexArray(0)
 }
 
-func (a *App) drawParticles(window *wayland.WaylandWindow) {
+func (a *App) drawParticles(window platform.Window) {
 	if len(a.app.Particles) == 0 {
 		return
 	}
@@ -152,7 +152,7 @@ func (a *App) drawParticles(window *wayland.WaylandWindow) {
 	gl.BindVertexArray(0)
 }
 
-func (a *App) drawBackground(currentTime float32, window *wayland.WaylandWindow) {
+func (a *App) drawBackground(currentTime float32, window platform.Window) {
 	fadeDuration := float32(1.0)
 	targetAlpha := a.app.Settings.OverlayAlpha
 
@@ -200,7 +200,7 @@ func (a *App) drawBackground(currentTime float32, window *wayland.WaylandWindow)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE)
 }
 
-func (a *App) drawCursorGlow(window *wayland.WaylandWindow, cursorX, cursorY, currentTime float32) {
+func (a *App) drawCursorGlow(window platform.Window, cursorX, cursorY, currentTime float32) {
 	width, height := window.GetSize()
 
 	growDuration := float32(1.2)

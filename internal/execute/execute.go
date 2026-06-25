@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/m31-galaxy/Hexecute/internal/models"
+	"github.com/m31-galaxy/Hexecute/internal/platform"
 	"github.com/m31-galaxy/Hexecute/internal/spawn"
 	"github.com/m31-galaxy/Hexecute/internal/stroke"
-	"github.com/m31-galaxy/Hexecute/pkg/wayland"
 )
 
 type App struct {
@@ -36,7 +36,7 @@ func Command(command string) error {
 	return cmd.Start()
 }
 
-func (a *App) RecognizeAndExecute(window *wayland.WaylandWindow, x, y float32) {
+func (a *App) RecognizeAndExecute(window platform.Window, x, y float32) {
 	if len(a.app.Points) < 5 {
 		log.Println("Gesture too short, ignoring")
 		return

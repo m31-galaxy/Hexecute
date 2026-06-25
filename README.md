@@ -1,6 +1,6 @@
 # Hexecute
 
-A gesture-based launcher for Wayland. Launch apps by casting spells! 🪄
+A gesture-based launcher for Wayland and macOS. Launch apps by casting spells! 🪄
 
 ![Demo GIF](.github/assets/demo.gif)
 
@@ -54,14 +54,24 @@ git clone https://github.com/m31-galaxy/Hexecute
 cd Hexecute
 ```
 
-If you have [Nix](https://nixos.org/) installed, simply run `nix build`.
+If you have [Nix](https://nixos.org/) installed, simply run `nix build`. This works on both Linux and macOS.
 
-Otherwise, make sure you have Go (and all dependent Wayland (and X11!?) libs) installed, then run:
+Otherwise:
+
+**On Linux**, make sure you have Go (and all dependent Wayland (and X11!?) libs) installed, then run:
 ```bash
 mkdir -p bin
 go build -o bin ./...
 ./bin/hexecute
 ```
+
+**On macOS**, make sure you have Go and the Xcode command line tools (`xcode-select --install`) installed, then run:
+```bash
+mkdir -p bin
+go build -o bin ./...
+./bin/hexecute
+```
+The macOS build uses a native Cocoa overlay window and the system OpenGL framework — no Wayland or X11 libraries are required.
 
 ## Usage
 
@@ -85,6 +95,12 @@ If you're using Sway, add the following line to your `~/.config/sway/config`:
 ```
 bindsym $mod+space exec hexecute
 ```
+
+#### macOS
+
+Running `hexecute` (with no arguments) **draws a gesture immediately**: the overlay appears, you cast once, and it dismisses. Bind it to a keyboard shortcut with your preferred hotkey tool (e.g. a Shortcuts.app quick action, Raycast, or skhd) to launch it on demand.
+
+> Note: depending on your macOS version, drawing the overlay over other applications may require granting your terminal (or whichever app launches Hexecute) **Screen Recording** and/or **Accessibility** permission under System Settings → Privacy & Security.
 
 ### Learning a Gesture
 
